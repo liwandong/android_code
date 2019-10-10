@@ -7,7 +7,7 @@ include $(CLEAR_VARS)
 LOCAL_SHARED_LIBRARIES := liblog
 LOCAL_SRC_FILES := bctest.c binder.c
 LOCAL_CFLAGS += $(svc_c_flags)
-LOCAL_MODULE := bctest
+LOCAL_MODULE := servicetest
 LOCAL_MODULE_TAGS := optional
 include $(BUILD_EXECUTABLE)
 
