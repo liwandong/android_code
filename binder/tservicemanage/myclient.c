@@ -8,6 +8,8 @@
 
 #include "binder.h"
 
+#define  TEST_CODE   0
+
 uint32_t svcmgr_lookup(struct binder_state *bs, uint32_t target, const char *name)
 {
     uint32_t handle;
@@ -56,6 +58,24 @@ int svcmgr_publish(struct binder_state *bs, uint32_t target, const char *name, v
 
 unsigned token;
 
+
+int sendmsgtoservice(struct binder_state *bs,uint32_t target)
+{
+  
+    int status;
+    unsigned iodata[512/4];
+    struct binder_io msg, reply;
+
+    bio_init(&msg, iodata, sizeof(iodata), 4);
+    bio_put_uint32(&msg, 0);  // strict mode header
+    if (binder_call(bs, &msg, &reply,target, TEST_CODE))
+    {
+     fprintf(stderr,"binder client send data fail\r\n");
+    }
+    binder_done(bs, &msg, &reply);
+}
+
+
 int main(int argc, char **argv)
 {
     int fd;
@@ -68,41 +88,16 @@ int main(int argc, char **argv)
         fprintf(stderr, "failed to open binder driver\n");
         return -1;
     }
-
-    argc--;
-    argv++;
-    while (argc > 0) {
-        if (!strcmp(argv[0],"alt")) {
-            handle = svcmgr_lookup(bs, svcmgr, "alt_svc_mgr");
-            if (!handle) {
-                fprintf(stderr,"cannot find alt_svc_mgr\n");
-                return -1;
-            }
-            svcmgr = handle;
-            fprintf(stderr,"svcmgr is via %x\n", handle);
-        } else if (!strcmp(argv[0],"lookup")) {
-            if (argc < 2) {
-                fprintf(stderr,"argument required\n");
-                return -1;
-            }
-            handle = svcmgr_lookup(bs, svcmgr, argv[1]);
-            fprintf(stderr,"lookup(%s) = %x\n", argv[1], handle);
-            argc--;
-            argv++;
-        } else if (!strcmp(argv[0],"publish")) {
-            if (argc < 2) {
-                fprintf(stderr,"argument required\n");
-                return -1;
-            }
-            svcmgr_publish(bs, svcmgr, argv[1], &token);
-            argc--;
-            argv++;
-        } else {
-            fprintf(stderr,"unknown command %s\n", argv[0]);
-            return -1;
-        }
-        argc--;
-        argv++;
+    //获取服务
+    handle = svcmgr_lookup(bs, svcmgr, "myservice");
+    if (!handle) {
+        fprintf(stderr,"cannot find alt_svc_mgr\n");
+        return -1;
     }
+    svcmgr = handle;
+    //发送消息
+    sendmsgtoservice(bs,handle);
+    //结束
+    binder_release(bs, handle);
     return 0;
 }

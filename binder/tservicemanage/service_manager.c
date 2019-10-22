@@ -170,7 +170,6 @@ uint16_t svcmgr_id[] = {
 uint32_t do_find_service(struct binder_state *bs, const uint16_t *s, size_t len, uid_t uid, pid_t spid)
 {
     struct svcinfo *si = find_svc(s, len);
-
     if (!si || !si->handle) {
         return 0;
     }
@@ -358,7 +357,6 @@ int main(int argc, char **argv)
         ALOGE("cannot become context manager (%s)\n", strerror(errno));
         return -1;
     }
-
     selinux_enabled = is_selinux_enabled();
     sehandle = selinux_android_service_context_handle();
     selinux_status_open(true);
@@ -380,7 +378,6 @@ int main(int argc, char **argv)
     selinux_set_callback(SELINUX_CB_AUDIT, cb);
     cb.func_log = selinux_log_callback;
     selinux_set_callback(SELINUX_CB_LOG, cb);
-
     binder_loop(bs, svcmgr_handler);
 
     return 0;
