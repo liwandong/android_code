@@ -2,24 +2,32 @@ package com.fingertech.displayfingerprint;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
-import android.graphics.Bitmap;
+//import android.graphics.Bitmap;
+import android.widget.Toast;
 
 import java.util.Arrays;
+import com.fingertech.displayfingerprint.Fingerprintjni;
 
 public class MainActivity extends AppCompatActivity {
     private Button mbutton =null;
     private ImageView imageView = null;
     private Bitmap mbitmap = null;
-    final int IMG_WIDTH = 196;
-    final int IMG_HIGHT = 96;
-
+    final int IMG_WIDTH = 192;
+    final int IMG_HIGHT = 256;
+    private Fingerprintjni fingerprintjni=null;
+    private EditText editText=null;
+    int ret  = 0;
+    private String fingeragcstr;
     private byte []imgbuf = new byte[IMG_WIDTH*IMG_HIGHT];
 
     //将数据组合成bmp格式的数据
@@ -84,24 +92,56 @@ public class MainActivity extends AppCompatActivity {
          }
          return  bitmapbuf;
     }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        //输入框
+        editText = (EditText)findViewById(R.id.myedittext);
         //找到button
         mbutton = (Button) findViewById(R.id.mybutton);
         //找到显示图片的控件
         imageView = (ImageView)findViewById(R.id.myimageview);
+        //创建jni实例
+        fingerprintjni = new Fingerprintjni();
+
+        //打开设备
+        ret = fingerprintjni.fingerprint_open();
+        if(ret < 0)
+        {
+            Toast.makeText(getApplicationContext(),"打开设备失败",Toast.LENGTH_SHORT).show();
+        }
+        Log.d("fingerprint","按钮触发");
+
+       // editText.setInputType(InputType.TYPE_NUMBER_VARIATION_NORMAL);
         //设置监听器
         mbutton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Arrays.fill(imgbuf,(byte)0x80);
-                byte []testbuf = fingertech_newbitmap(imgbuf,IMG_WIDTH,IMG_HIGHT);
-                mbitmap = BitmapFactory.decodeByteArray(testbuf,0,testbuf.length);
-                imageView.setImageBitmap(mbitmap);
-                Log.d("fingerprint","按钮触发");
-
+                fingeragcstr = editText.getText().toString();
+                Log.d("fingerprint",fingeragcstr);
+                if(Integer.parseInt(fingeragcstr)>255) {
+                    Toast.makeText(v.getContext(),"最大值不能超过255",Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    //设置agc
+                    ret = fingerprintjni.fingerprint_setimgagc((byte)Integer.parseInt(fingeragcstr));
+                    if(ret <0)
+                    {
+                        Toast.makeText(v.getContext(),"配置agc失败",Toast.LENGTH_SHORT).show();
+                    }
+                    //读图
+                    ret = fingerprintjni.fingerprint_getimg(imgbuf);
+                    if(ret <0)
+                    {
+                        Toast.makeText(v.getContext(),"获取图像失败",Toast.LENGTH_SHORT).show();
+                    }
+                    //Arrays.fill(imgbuf,(byte)0x50);
+                    byte []testbuf = fingertech_newbitmap(imgbuf,IMG_WIDTH,IMG_HIGHT);
+                    mbitmap = BitmapFactory.decodeByteArray(testbuf,0,testbuf.length);
+                    imageView.setImageBitmap(mbitmap);
+                }
             }
         });
 
