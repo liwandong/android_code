@@ -1,12 +1,13 @@
 package com.fingertech.displayfingerprint;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.multidex.MultiDex;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.text.InputType;
+import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -16,7 +17,9 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.util.Arrays;
-import com.fingertech.displayfingerprint.Fingerprintjni;
+import android.os.IFingertechFingerprint;
+import android.os.ServiceManager;
+
 
 public class MainActivity extends AppCompatActivity {
     private Button mbutton =null;
@@ -24,11 +27,17 @@ public class MainActivity extends AppCompatActivity {
     private Bitmap mbitmap = null;
     final int IMG_WIDTH = 192;
     final int IMG_HIGHT = 256;
-    private Fingerprintjni fingerprintjni=null;
+    private IFingertechFingerprint fingerprintserver=null;
     private EditText editText=null;
     int ret  = 0;
     private String fingeragcstr;
     private byte []imgbuf = new byte[IMG_WIDTH*IMG_HIGHT];
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        MultiDex.install(this);
+    }
 
     //将数据组合成bmp格式的数据
     private byte[] fingertech_newbitmap(byte []pixbuf,int w,int h)
@@ -104,16 +113,12 @@ public class MainActivity extends AppCompatActivity {
         //找到显示图片的控件
         imageView = (ImageView)findViewById(R.id.myimageview);
         //创建jni实例
-        fingerprintjni = new Fingerprintjni();
-
-        //打开设备
-        ret = fingerprintjni.fingerprint_open();
-        if(ret < 0)
+        fingerprintserver = IFingertechFingerprint.Stub.asInterface(ServiceManager.getService("fingerprint"));
+        if(null == fingerprintserver)
         {
-            Toast.makeText(getApplicationContext(),"打开设备失败",Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(),"获取指纹服务失败",Toast.LENGTH_SHORT).show();
         }
-        Log.d("fingerprint","按钮触发");
-
+        Toast.makeText(getApplicationContext(),"获取指纹服务失败",Toast.LENGTH_SHORT).show();
        // editText.setInputType(InputType.TYPE_NUMBER_VARIATION_NORMAL);
         //设置监听器
         mbutton.setOnClickListener(new View.OnClickListener() {
@@ -126,25 +131,35 @@ public class MainActivity extends AppCompatActivity {
                 }
                 else{
                     //设置agc
-                    ret = fingerprintjni.fingerprint_setimgagc((byte)Integer.parseInt(fingeragcstr));
-                    if(ret <0)
-                    {
-                        Toast.makeText(v.getContext(),"配置agc失败",Toast.LENGTH_SHORT).show();
+                    try {
+                        ret = fingerprintserver.fingertech_setimgagc((byte)Integer.parseInt(fingeragcstr));
+                        if(ret <0)
+                        {
+                            Toast.makeText(v.getContext(),"配置agc失败",Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
                     }
+
                     //读图
-                    ret = fingerprintjni.fingerprint_getimg(imgbuf);
-                    if(ret <0)
-                    {
-                        Toast.makeText(v.getContext(),"获取图像失败",Toast.LENGTH_SHORT).show();
+                    try {
+                        ret = fingerprintserver.fingertech_getimgbuf(imgbuf);
+                        if(ret <0)
+                        {
+                            Toast.makeText(v.getContext(),"获取图像失败",Toast.LENGTH_SHORT).show();
+                        }
+                        else {
+                            //Arrays.fill(imgbuf,(byte)0x50);
+                            byte[] testbuf = fingertech_newbitmap(imgbuf, IMG_WIDTH, IMG_HIGHT);
+                            mbitmap = BitmapFactory.decodeByteArray(testbuf, 0, testbuf.length);
+                            imageView.setImageBitmap(mbitmap);
+                        }
+
+                    }catch (RemoteException e) {
+                        e.printStackTrace();
                     }
-                    //Arrays.fill(imgbuf,(byte)0x50);
-                    byte []testbuf = fingertech_newbitmap(imgbuf,IMG_WIDTH,IMG_HIGHT);
-                    mbitmap = BitmapFactory.decodeByteArray(testbuf,0,testbuf.length);
-                    imageView.setImageBitmap(mbitmap);
                 }
             }
         });
-
     }
-
 }
