@@ -14,7 +14,9 @@
 #include <cutils/log.h>
 #include <android_runtime/AndroidRuntime.h>
 
-jbyte gimgbuf[192*256];
+namespace android {
+
+uint8_t gimgbuf[192*256];
 int fpsfd = 0;
 
 #define FINGERTECH_IOCTL_MAGIC_NO          0xFB
@@ -30,7 +32,7 @@ int fpsfd = 0;
 static const char *fingertechclassname = "com/android/server/FingertechfingerprintService";
 
 //初始化agc
-static jint fingertech_setimageagc(JNIEnv *env,jobject obj,jbyte agcval)
+static JNIEXPORT jint fingertech_setimageagc(JNIEnv *env,jobject obj,jbyte agcval)
 {
   jint ret = 0;
   ret = ioctl(fpsfd,FINGERTECH_INIT,agcval);
@@ -38,29 +40,34 @@ static jint fingertech_setimageagc(JNIEnv *env,jobject obj,jbyte agcval)
 }
 
 //读图
-static jint fingertech_readimgerbuf(JNIEnv *env,jobject obj,jbyteArray buf)
+static JNIEXPORT jint JNICALL fingertech_readimgerbuf(JNIEnv *env,jobject obj,jbyteArray buf)
 {
  jint ret = 0;
  jbyte *bytearray;
+ //jbyteArray imgbuf;
+ uint32_t i = 0;
+ uint32_t len = 0;
  ret = ioctl(fpsfd,FINGERTECH_GETIMAGE);
  if(ret < 0)
  {
    return ret;
  }
- //jbyteArray->jbyte 指针 -> c uint8_t 数组
- bytearray = env->GetByteArrayElements(buf,NULL);
- if(NULL == bytearray)
+ //读图
+ ret = read(fpsfd,gimgbuf,192*256);
+ ALOGE("fingertech readimage=%x",gimgbuf[0]);
+ //获取指针
+ bytearray = env->GetByteArrayElements(buf, NULL);
+ for(i=0;i<192*256;i++)
  {
-  return -1;
- }
- ret = read(fpsfd,bytearray,192*256);
- //c中的数组操作同步到java中，并且释放资源
+   bytearray[i] = gimgbuf[i];
+   // bytearray[i] = 0xaa;
+ } 
  env->ReleaseByteArrayElements(buf,bytearray,0);
  return ret;
 }
 
 //打开设备
-static jint fingertech_opendev(JNIEnv *env,jobject obj)
+static JNIEXPORT jint fingertech_opendev(JNIEnv *env,jobject obj)
 {
    fpsfd = open("/dev/fpsdev0",O_RDWR);
    ALOGE("%s fd=%d","fingertech_opendev",fpsfd);
@@ -68,12 +75,11 @@ static jint fingertech_opendev(JNIEnv *env,jobject obj)
 }
 
 //关闭设备
-static void fingertech_closedev(JNIEnv *env,jobject obj)
+static JNIEXPORT void fingertech_closedev(JNIEnv *env,jobject obj)
 {
    close(fpsfd);
 }
 
-namespace android {
 //JNI 表
 //java 中的名称  变量签名（参数）返回值 c 中的方法名称
 static JNINativeMethod fingertech_Methods_table[] = {
@@ -106,17 +112,4 @@ int register_android_server_FingertechFingerprint(JNIEnv* env){
  }
 }
 
-//JNI_Onload 方法
-#if 0
-jint JNIEXPORT JNI_OnLoad(JavaVM* vm,void* reserved)
-{
-    JNIEnv* env = NULL;
-    jint result = -1;
-    if ((*vm)->GetEnv(vm,(void**) &env, JNI_VERSION_1_4) != JNI_OK) {
-     return result;
-    }
-    jniRegisterNativeMethods(env,fingertechclassname,fingertech_Methods_table,sizeof(fingertech_Methods_table)/sizeof(fingertech_Methods_table[0]));
-    return JNI_VERSION_1_4;
-}
-#endif
 

@@ -65,10 +65,7 @@ import com.android.server.content.ContentService;
 import com.android.server.devicepolicy.DevicePolicyManagerService;
 import com.android.server.display.DisplayManagerService;
 import com.android.server.dreams.DreamManagerService;
-//import com.android.server.fingerprint.FingerprintService;
-//add by wendell
-import com.android.server.FingertechfingerprintService;
-
+import com.android.server.fingerprint.FingerprintService;
 import com.android.server.hdmi.HdmiControlService;
 import com.android.server.input.InputManagerService;
 import com.android.server.job.JobSchedulerService;
@@ -127,6 +124,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import libcore.io.IoUtils;
 import libcore.util.Objects;
+//add by wendell
+import com.android.server.FingertechfingerprintService;
 
 import dalvik.system.VMRuntime;
 
@@ -487,8 +486,9 @@ public final class SystemServer {
             vibrator = new VibratorService(context);
             ServiceManager.addService("vibrator", vibrator);
 
-            Slog.i(TAG, "FingertechFingerprint Service");
-            ServiceManager.addService("fingerprint", new FingertechfingerprintService());
+            //add by wendell
+            Slog.i(TAG, "Vibrator Service");
+            ServiceManager.addService("myfingerprint", new FingertechfingerprintService());
 
             Slog.i(TAG, "Consumer IR Service");
             consumerIr = new ConsumerIrService(context);
@@ -1064,7 +1064,7 @@ public final class SystemServer {
 
                 mSystemServiceManager.startService(TrustManagerService.class);
 
-                //mSystemServiceManager.startService(FingerprintService.class);
+                mSystemServiceManager.startService(FingerprintService.class);
 
                 try {
                     Slog.i(TAG, "BackgroundDexOptService");
