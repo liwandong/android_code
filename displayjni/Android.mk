@@ -1,17 +1,17 @@
 #LOCAL_PATH 表示源码树的路径
 LOCAL_PATH := $(call my-dir)
-##hw 层编译
-#include $(CLEAR_VARS)
-#LOCAL_MODULE := fingerprint.default
-#LOCAL_MODULE_RELATIVE_PATH := hw
-#LOCAL_SRC_FILES := ./fingertech_hal/fingertech_fingerprint.c
-#LOCAL_SHARED_LIBRARIES = liblog
-#LOCAL_LDLIBS    := -lm -llog 
-#LOCAL_MODULE_TAGS := optional
-#LOCAL_C_INCLUDES = ./platform/inc/system/core/include \
-#                   ./platform/hardware/libhardware/include \
-#		   ./fingertech_hal 
-#include $(BUILD_SHARED_LIBRARY)
+#hw 层编译
+include $(CLEAR_VARS)
+LOCAL_MODULE := fingertechfingerprint.default
+LOCAL_MODULE_RELATIVE_PATH := hw
+LOCAL_SRC_FILES := ./fingertech_hal/fingertech_fingerprint.c
+LOCAL_SHARED_LIBRARIES = liblog
+LOCAL_LDLIBS    := -lm -llog 
+LOCAL_MODULE_TAGS := optional
+LOCAL_C_INCLUDES = ./platform/inc/system/core/include \
+                   ./platform/hardware/libhardware/include \
+		   		   ./fingertech_hal 
+include $(BUILD_SHARED_LIBRARY)
 
 
 

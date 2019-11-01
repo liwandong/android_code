@@ -4,7 +4,7 @@
 #include <hardware/hw_auth_token.h>
 
 //模块ID
-#define  FINGERPRINT_HARDWARE_MODULE_ID  "fingertech_fingerprint"
+#define  FINGERTECHFINGERPRINT_HARDWARE_MODULE_ID  "fingertechfingerprint"
 
 #define FINGERPRINT_MODULE_API_VERSION_1_0 HARDWARE_MODULE_API_VERSION(1, 0)
 #define FINGERPRINT_MODULE_API_VERSION_2_0 HARDWARE_MODULE_API_VERSION(2, 0)
@@ -14,6 +14,7 @@ typedef struct fingertech_deivce_t {
    struct hw_device_t common_device;
    //需要实现的函数指
    int (*fingertech_getimgbuf)(uint8_t*buf);
+   int (*fingertech_setimgagc)(uint8_t agc);
 }fingertech_deivce_t; 
 
 typedef struct fingertech_module_t {

@@ -7,6 +7,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
@@ -112,13 +113,19 @@ public class MainActivity extends AppCompatActivity {
         mbutton = (Button) findViewById(R.id.mybutton);
         //找到显示图片的控件
         imageView = (ImageView)findViewById(R.id.myimageview);
+
+        IBinder mybinder = ServiceManager.getService("myfingerprint");
+        if( mybinder== null)
+        {
+            Toast.makeText(getApplicationContext(),"获取指纹服务失败",Toast.LENGTH_SHORT).show();
+        }
+
         //创建jni实例
-        fingerprintserver = IFingertechFingerprint.Stub.asInterface(ServiceManager.getService("fingerprint"));
+        fingerprintserver = IFingertechFingerprint.Stub.asInterface(mybinder);
         if(null == fingerprintserver)
         {
             Toast.makeText(getApplicationContext(),"获取指纹服务失败",Toast.LENGTH_SHORT).show();
         }
-        Toast.makeText(getApplicationContext(),"获取指纹服务失败",Toast.LENGTH_SHORT).show();
        // editText.setInputType(InputType.TYPE_NUMBER_VARIATION_NORMAL);
         //设置监听器
         mbutton.setOnClickListener(new View.OnClickListener() {
@@ -144,13 +151,15 @@ public class MainActivity extends AppCompatActivity {
                     //读图
                     try {
                         ret = fingerprintserver.fingertech_getimgbuf(imgbuf);
+                        Log.d("fingerprint vvvvvvvv",imgbuf.toString());
                         if(ret <0)
                         {
                             Toast.makeText(v.getContext(),"获取图像失败",Toast.LENGTH_SHORT).show();
                         }
                         else {
-                            //Arrays.fill(imgbuf,(byte)0x50);
+                            //Arrays.fill(imgbuf,(byte)0xff);
                             byte[] testbuf = fingertech_newbitmap(imgbuf, IMG_WIDTH, IMG_HIGHT);
+
                             mbitmap = BitmapFactory.decodeByteArray(testbuf, 0, testbuf.length);
                             imageView.setImageBitmap(mbitmap);
                         }
